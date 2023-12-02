@@ -1,0 +1,46 @@
+version: '3'
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        LOCAL_UID: ${LOCAL_UID:-1000}
+        LOCAL_GID: ${LOCAL_GID:-1000}
+    env_file:
+      - .env
+    networks:
+      - app
+    ports:
+      - "80:80"
+    volumes:
+      - ..:/var/www/localhost
+    user: ${LOCAL_UID:-1000}:${LOCAL_GID:-1000}
+  db:
+    image: mysql:8.0.35
+    platform: linux/x86_64
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - "db:/var/lib/mysql"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - 3307:3306
+    networks:
+      - app
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: db  # same as the `db` service's name above
+      PMA_PORT: 3306
+    ports:
+      - 8081:80
+    networks:
+      - app
+volumes:
+    db:
+networks:
+  app:
